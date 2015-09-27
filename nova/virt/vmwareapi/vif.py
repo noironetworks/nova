@@ -152,7 +152,8 @@ def get_neutron_network(session, network_name, cluster, vif):
 
 def get_network_ref(session, cluster, vif, is_neutron):
     if is_neutron:
-        network_name = (vif['network']['bridge'] or
+        network_name = (vif['network']['meta']['tenant_id'] +
+                       '|noiro|' + vif['network']['label'][4:] or
                         CONF.vmware.integration_bridge)
         network_ref = get_neutron_network(session, network_name, cluster, vif)
     else:
