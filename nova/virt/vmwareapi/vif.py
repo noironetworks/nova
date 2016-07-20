@@ -153,9 +153,17 @@ def get_neutron_network(session, network_name, cluster, vif):
 
 def get_network_ref(session, cluster, vif, is_neutron):
     if is_neutron:
-        network_name = (vif['network']['bridge'] or
-                        CONF.vmware.integration_bridge)
+        # Port binding for DVS VIF types may pass the name
+        # of the port group, so use it if present
+        network_name = vif.get('details', {}).get('dvs_port_group_name')
+        if network_name is None:
+            # Make use of the original one, in the event that the
+            # port binding does not provide this key in VIF details
+            network_name = (vif['network']['bridge'] or
+                            CONF.vmware.integration_bridge)
         network_ref = get_neutron_network(session, network_name, cluster, vif)
+        if vif.get('details') and vif['details'].get('dvs_port_key'):
+            network_ref['dvs_port_key'] = vif['details']['dvs_port_key']
     else:
         create_vlan = vif['network'].get_meta('should_create_vlan', False)
         network_ref = ensure_vlan_bridge(session, vif, cluster=cluster,
